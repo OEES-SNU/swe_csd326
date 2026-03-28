@@ -1,0 +1,50 @@
+package com.oees.oees.controller;
+
+import com.oees.oees.dto.request.ExamRequest;
+import com.oees.oees.dto.response.ExamResponse;
+import com.oees.oees.repository.userRepository;
+import com.oees.oees.security.JwtUtil;
+import com.oees.oees.service.ExamService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/exams")
+@RequiredArgsConstructor
+public class ExamController {
+
+    private final ExamService examService;
+    private final JwtUtil jwtUtil;
+    private final userRepository userRepository;
+
+    @PostMapping
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<ExamResponse> createExam(
+            @RequestBody ExamRequest req,
+            @RequestHeader("Authorization") String token) {
+        String email = jwtUtil.extractUsername(token.substring(7));
+        Long instructorId = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found")).getId();
+        return ResponseEntity.ok(examService.createExam(req, instructorId));
+    }
+
+    @GetMapping("/available")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<List<ExamResponse>> getAvailableExams(
+            @RequestHeader("Authorization") String token) {
+        String email = jwtUtil.extractUsername(token.substring(7));
+        Long studentId = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found")).getId();
+        return ResponseEntity.ok(examService.getExamsForStudent(studentId));
+    }
+
+    @GetMapping("/course/{courseId}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<ExamResponse>> getExamsByCourse(@PathVariable Long courseId) {
+        return ResponseEntity.ok(examService.getExamsByCourse(courseId));
+    }
+}
