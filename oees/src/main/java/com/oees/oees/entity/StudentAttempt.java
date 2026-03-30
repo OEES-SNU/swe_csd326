@@ -37,4 +37,8 @@ public class StudentAttempt {
 
     @OneToMany(mappedBy = "attempt", cascade = CascadeType.ALL)
     private List<StudentResponse> responses;
+
+    private Integer totalScore;
+    @Builder.Default
+    private Boolean evaluated = false;
 }

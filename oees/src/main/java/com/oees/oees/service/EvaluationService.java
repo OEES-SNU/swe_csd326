@@ -55,12 +55,36 @@ public class EvaluationService {
     }
 
     private void finalizeAttemptIfComplete(Long attemptId) {
-        List<StudentResponse> pending = responseRepository.findUnevaluatedDescriptive(attemptId);
-        if (pending.isEmpty()) {
-            StudentAttempt attempt = attemptRepository.findById(attemptId)
-                    .orElseThrow(() -> new RuntimeException("Attempt not found"));
-            attempt.setStatus(AttemptStatus.EVALUATED);
-            attemptRepository.save(attempt);
-        }
+        StudentAttempt attempt = attemptRepository.findById(attemptId)
+                .orElseThrow(() -> new RuntimeException("Attempt not found"));
+
+        // Check ALL responses (not just descriptive)
+        boolean pending = attempt.getResponses().stream()
+                .anyMatch(r -> r.getMarksAwarded() == null);
+
+        if (pending) return;
+
+        // Compute total
+        int total = attempt.getResponses().stream()
+                .mapToInt(r -> r.getMarksAwarded())
+                .sum();
+
+        attempt.setTotalScore(total);
+        attempt.setEvaluated(true);
+        attempt.setStatus(AttemptStatus.EVALUATED);
+
+        attemptRepository.save(attempt);
+
+
     }
+
+//    private void finalizeAttemptIfComplete(Long attemptId) {
+//        List<StudentResponse> pending = responseRepository.findUnevaluatedDescriptive(attemptId);
+//        if (pending.isEmpty()) {
+//            StudentAttempt attempt = attemptRepository.findById(attemptId)
+//                    .orElseThrow(() -> new RuntimeException("Attempt not found"));
+//            attempt.setStatus(AttemptStatus.EVALUATED);
+//            attemptRepository.save(attempt);
+//        }
+//    }
 }

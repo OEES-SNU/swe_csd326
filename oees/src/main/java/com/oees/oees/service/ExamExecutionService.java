@@ -147,14 +147,14 @@ public class ExamExecutionService {
         responseRepository.saveAll(responses);
 
         // If no descriptive questions remain unevaluated, mark attempt as EVALUATED
-        boolean hasUnevaluatedDescriptive = responses.stream()
-                .anyMatch(sr -> sr.getQuestion().getType() == QuestionType.DESCRIPTIVE
-                        && sr.getMarksAwarded() == null);
-        if (!hasUnevaluatedDescriptive) {
-            StudentAttempt attempt = attemptRepository.findById(attemptId)
-                    .orElseThrow(() -> new RuntimeException("Attempt not found"));
-            attempt.setStatus(AttemptStatus.EVALUATED);
-            attemptRepository.save(attempt);
-        }
+//        boolean hasUnevaluatedDescriptive = responses.stream()
+//                .anyMatch(sr -> sr.getQuestion().getType() == QuestionType.DESCRIPTIVE
+//                        && sr.getMarksAwarded() == null);
+//        if (!hasUnevaluatedDescriptive) {
+//            StudentAttempt attempt = attemptRepository.findById(attemptId)
+//                    .orElseThrow(() -> new RuntimeException("Attempt not found"));
+//            attempt.setStatus(AttemptStatus.EVALUATED);
+//            attemptRepository.save(attempt);
+//        }
     }
 }

@@ -25,9 +25,29 @@ public class ResultService {
 
     @Transactional
     public void generateResults(Long examId) {
-        List<StudentAttempt> evaluated = new java.util.ArrayList<>();
-        evaluated.addAll(attemptRepository.findByExamIdAndStatus(examId, AttemptStatus.EVALUATED));
-        evaluated.addAll(attemptRepository.findByExamIdAndStatus(examId, AttemptStatus.SUBMITTED));
+
+        List<StudentAttempt> attempts = new java.util.ArrayList<>();
+        attempts.addAll(attemptRepository.findByExamIdAndStatus(examId, AttemptStatus.EVALUATED));
+        attempts.addAll(attemptRepository.findByExamIdAndStatus(examId, AttemptStatus.SUBMITTED));
+
+        boolean anyPending = attempts.stream()
+                .anyMatch(a -> a.getStatus() == AttemptStatus.SUBMITTED);
+
+        if (anyPending) {
+            throw new RuntimeException("Not all attempts are evaluated yet");
+        }
+
+        List<StudentAttempt> evaluated = attempts.stream()
+                .filter(a -> a.getStatus() == AttemptStatus.EVALUATED)
+                .toList();
+
+
+//        List<StudentAttempt> evaluated = attemptRepository
+//                .findByExamIdAndStatus(examId, AttemptStatus.EVALUATED);
+
+//        List<StudentAttempt> evaluated = new java.util.ArrayList<>();
+//        evaluated.addAll(attemptRepository.findByExamIdAndStatus(examId, AttemptStatus.EVALUATED));
+//        evaluated.addAll(attemptRepository.findByExamIdAndStatus(examId, AttemptStatus.SUBMITTED));
 
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Exam not found"));
