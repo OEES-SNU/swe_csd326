@@ -21,7 +21,7 @@ public class ResultController {
     private final userRepository userRepository;
 
     @PostMapping("/generate/{examId}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     public ResponseEntity<String> generateResults(@PathVariable Long examId) {
         resultService.generateResults(examId);
         return ResponseEntity.ok("Results generated successfully");

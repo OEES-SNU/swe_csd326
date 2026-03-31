@@ -32,7 +32,7 @@ public class AttemptController {
 
     @PostMapping("/{attemptId}/submit")
     @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<String> submitAttempt(
+    public ResponseEntity<ExamExecutionService.SubmitResult> submitAttempt(
             @PathVariable Long examId,
             @PathVariable Long attemptId,
             @RequestBody SubmitAttemptRequest req,
@@ -40,7 +40,7 @@ public class AttemptController {
         String email = jwtUtil.extractUsername(token.substring(7));
         Long studentId = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found")).getId();
-        executionService.submitAttempt(attemptId, studentId, req);
-        return ResponseEntity.ok("Exam submitted successfully");
+        ExamExecutionService.SubmitResult result = executionService.submitAttempt(attemptId, studentId, req);
+        return ResponseEntity.ok(result);
     }
 }

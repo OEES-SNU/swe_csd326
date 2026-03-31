@@ -1,8 +1,10 @@
 package com.oees.oees.controller;
 
 import com.oees.oees.dto.request.QuestionRequest;
+import com.oees.oees.entity.Course;
 import com.oees.oees.entity.Question;
 import com.oees.oees.entity.User;
+import com.oees.oees.repository.CourseRepository;
 import com.oees.oees.service.QuestionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,13 @@ import java.util.List;
 public class QuestionController {
 
     private final QuestionService questionService;
+    private final CourseRepository courseRepository;
+
+    @GetMapping("/my-courses")
+    public ResponseEntity<List<Course>> getMyCourses(
+            @AuthenticationPrincipal User instructor) {
+        return ResponseEntity.ok(courseRepository.findByInstructor(instructor));
+    }
 
     @PostMapping
     public ResponseEntity<Question> createQuestion(

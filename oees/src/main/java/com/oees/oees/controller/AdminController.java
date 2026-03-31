@@ -47,6 +47,16 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getAllStudents());
     }
 
+    @GetMapping("/users")
+    public ResponseEntity<List<User>> getAllUsers() {
+        return ResponseEntity.ok(adminService.getAllUsers());
+    }
+
+    @GetMapping("/instructors")
+    public ResponseEntity<List<User>> getAllInstructors() {
+        return ResponseEntity.ok(adminService.getAllInstructors());
+    }
+
     @GetMapping("/courses")
     public ResponseEntity<List<Course>> getAllCourses() {
         return ResponseEntity.ok(adminService.getAllCourses());

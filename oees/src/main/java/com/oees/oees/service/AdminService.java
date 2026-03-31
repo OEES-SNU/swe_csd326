@@ -72,6 +72,16 @@ public class AdminService {
                 .toList();
     }
 
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public List<User> getAllInstructors() {
+        return userRepository.findAll().stream()
+                .filter(u -> u.getRole() == Role.INSTRUCTOR)
+                .toList();
+    }
+
     public List<Course> getAllCourses() {
         return courseRepository.findAll();
     }

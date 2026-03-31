@@ -95,8 +95,10 @@ public class ExamExecutionService {
                 .build();
     }
 
+    public record SubmitResult(Integer score, Integer totalMarks, boolean pendingEvaluation) {}
+
     @Transactional
-    public void submitAttempt(Long attemptId, Long studentId, SubmitAttemptRequest req) {
+    public SubmitResult submitAttempt(Long attemptId, Long studentId, SubmitAttemptRequest req) {
         StudentAttempt attempt = attemptRepository.findById(attemptId)
                 .orElseThrow(() -> new RuntimeException("Attempt not found"));
 
@@ -126,6 +128,17 @@ public class ExamExecutionService {
         attemptRepository.save(attempt);
 
         autoEvaluateObjective(attempt.getId());
+
+        // Determine result to return to student
+        List<StudentResponse> saved = responseRepository.findByAttemptId(attempt.getId());
+        boolean hasPending = saved.stream().anyMatch(r -> r.getMarksAwarded() == null);
+        int autoScore = saved.stream()
+                .filter(r -> r.getMarksAwarded() != null)
+                .mapToInt(StudentResponse::getMarksAwarded)
+                .sum();
+        int totalMarks = attempt.getExam().getTotalMarks();
+
+        return new SubmitResult(autoScore, totalMarks, hasPending);
     }
 
     @Transactional
@@ -134,27 +147,33 @@ public class ExamExecutionService {
         for (StudentResponse sr : responses) {
             Question q = sr.getQuestion();
             if (q.getType() == QuestionType.MULTIPLE_CHOICE || q.getType() == QuestionType.FILL_IN_THE_BLANK) {
-                String correct = q.getCorrectAnswer();
+                String correct = q.getCorrectAnswer() != null ? q.getCorrectAnswer().trim() : null;
                 String given = q.getType() == QuestionType.MULTIPLE_CHOICE
                         ? sr.getSelectedOption()
                         : sr.getResponseText();
-                sr.setMarksAwarded(correct != null && correct.equalsIgnoreCase(given)
-                        ? q.getMarks()
+                String givenTrimmed = given != null ? given.trim() : null;
+                sr.setMarksAwarded(correct != null && correct.equalsIgnoreCase(givenTrimmed)
+                        ? (q.getMarks() != null ? q.getMarks() : 0)
                         : 0);
                 sr.setEvaluatedAt(LocalDateTime.now());
             }
         }
         responseRepository.saveAll(responses);
 
-        // If no descriptive questions remain unevaluated, mark attempt as EVALUATED
-//        boolean hasUnevaluatedDescriptive = responses.stream()
-//                .anyMatch(sr -> sr.getQuestion().getType() == QuestionType.DESCRIPTIVE
-//                        && sr.getMarksAwarded() == null);
-//        if (!hasUnevaluatedDescriptive) {
-//            StudentAttempt attempt = attemptRepository.findById(attemptId)
-//                    .orElseThrow(() -> new RuntimeException("Attempt not found"));
-//            attempt.setStatus(AttemptStatus.EVALUATED);
-//            attemptRepository.save(attempt);
-//        }
+        // If no descriptive questions remain unevaluated, finalize the attempt
+        boolean hasUnevaluatedDescriptive = responses.stream()
+                .anyMatch(sr -> sr.getQuestion().getType() == QuestionType.DESCRIPTIVE
+                        && sr.getMarksAwarded() == null);
+        if (!hasUnevaluatedDescriptive) {
+            StudentAttempt attempt = attemptRepository.findById(attemptId)
+                    .orElseThrow(() -> new RuntimeException("Attempt not found"));
+            int total = responses.stream()
+                    .filter(sr -> sr.getMarksAwarded() != null)
+                    .mapToInt(StudentResponse::getMarksAwarded)
+                    .sum();
+            attempt.setTotalScore(total);
+            attempt.setStatus(AttemptStatus.EVALUATED);
+            attemptRepository.save(attempt);
+        }
     }
 }

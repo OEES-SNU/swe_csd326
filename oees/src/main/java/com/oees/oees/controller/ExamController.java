@@ -2,6 +2,10 @@ package com.oees.oees.controller;
 
 import com.oees.oees.dto.request.ExamRequest;
 import com.oees.oees.dto.response.ExamResponse;
+import com.oees.oees.entity.Course;
+import com.oees.oees.entity.Enrollment;
+import com.oees.oees.entity.User;
+import com.oees.oees.repository.EnrollmentRepository;
 import com.oees.oees.repository.userRepository;
 import com.oees.oees.security.JwtUtil;
 import com.oees.oees.service.ExamService;
@@ -20,6 +24,7 @@ public class ExamController {
     private final ExamService examService;
     private final JwtUtil jwtUtil;
     private final userRepository userRepository;
+    private final EnrollmentRepository enrollmentRepository;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -40,6 +45,20 @@ public class ExamController {
         Long studentId = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found")).getId();
         return ResponseEntity.ok(examService.getExamsForStudent(studentId));
+    }
+
+    @GetMapping("/my-courses")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<List<Course>> getMyCourses(
+            @RequestHeader("Authorization") String token) {
+        String email = jwtUtil.extractUsername(token.substring(7));
+        User student = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        List<Course> courses = enrollmentRepository.findByStudent(student)
+                .stream()
+                .map(Enrollment::getCourse)
+                .toList();
+        return ResponseEntity.ok(courses);
     }
 
     @GetMapping("/course/{courseId}")
