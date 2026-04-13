@@ -39,6 +39,7 @@ public class User implements UserDetails {
     private Role role;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean active = true;
 
     @Override

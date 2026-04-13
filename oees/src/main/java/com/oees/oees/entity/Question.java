@@ -61,5 +61,6 @@ public class Question {
     private User createdBy;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean active = true;
 }

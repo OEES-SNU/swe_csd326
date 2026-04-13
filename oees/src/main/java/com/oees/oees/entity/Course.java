@@ -32,5 +32,6 @@ public class Course {
     private User instructor;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean active = true;
 }
