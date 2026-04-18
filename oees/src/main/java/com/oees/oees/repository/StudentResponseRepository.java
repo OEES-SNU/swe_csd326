@@ -18,4 +18,7 @@ public interface StudentResponseRepository extends JpaRepository<StudentResponse
 
     @Query("SELECT sr FROM StudentResponse sr WHERE sr.attempt.exam.id = :examId AND sr.attempt.status = 'EVALUATED'")
     List<StudentResponse> findEvaluatedResponsesByExamId(Long examId);
+
+    @Query("SELECT sr FROM StudentResponse sr WHERE sr.attempt.exam.course.id = :courseId AND sr.attempt.status = 'EVALUATED' AND sr.marksAwarded IS NOT NULL")
+    List<StudentResponse> findEvaluatedResponsesByCourseId(Long courseId);
 }

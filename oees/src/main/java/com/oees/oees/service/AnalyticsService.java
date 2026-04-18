@@ -90,7 +90,7 @@ public class AnalyticsService {
     }
 
     @Transactional(readOnly = true)
-    public List<UnitAnalytics> getUnitAnalytics(Long examId) {
+    public List<UnitAnalytics> getExamUnitAnalytics(Long examId) {
 
         List<StudentResponse> responses = responseRepository
                 .findEvaluatedResponsesByExamId(examId);
@@ -108,6 +108,43 @@ public class AnalyticsService {
 
             int totalObtained = unitResponses.stream()
                     .mapToInt(r -> r.getMarksAwarded() != null ? r.getMarksAwarded() : 0)
+                    .sum();
+
+            int totalPossible = unitResponses.stream()
+                    .mapToInt(r -> r.getQuestion().getMarks())
+                    .sum();
+
+            double percentage = totalPossible == 0
+                    ? 0
+                    : (totalObtained * 100.0) / totalPossible;
+
+            result.add(UnitAnalytics.builder()
+                    .unit(unit)
+                    .averagePercentage(percentage)
+                    .build());
+        }
+
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public List<UnitAnalytics> getCourseUnitAnalytics(Long courseId) {
+
+        List<StudentResponse> responses = responseRepository
+                .findEvaluatedResponsesByCourseId(courseId);
+
+        Map<String, List<StudentResponse>> grouped = responses.stream()
+                .collect(Collectors.groupingBy(r -> r.getQuestion().getUnit()));
+
+        List<UnitAnalytics> result = new ArrayList<>();
+
+        for (Map.Entry<String, List<StudentResponse>> entry : grouped.entrySet()) {
+
+            String unit = entry.getKey();
+            List<StudentResponse> unitResponses = entry.getValue();
+
+            int totalObtained = unitResponses.stream()
+                    .mapToInt(StudentResponse::getMarksAwarded)
                     .sum();
 
             int totalPossible = unitResponses.stream()

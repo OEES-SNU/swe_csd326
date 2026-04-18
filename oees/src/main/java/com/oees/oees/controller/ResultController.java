@@ -53,7 +53,13 @@ public class ResultController {
 
     @GetMapping("/analytics/exam/{examId}/unit/average")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<AnalyticsService.UnitAnalytics>> getUnitAnalytics(@PathVariable Long examId) {
-        return ResponseEntity.ok(analyticsService.getUnitAnalytics(examId));
+    public ResponseEntity<List<AnalyticsService.UnitAnalytics>> getExamUnitAnalytics(@PathVariable Long examId) {
+        return ResponseEntity.ok(analyticsService.getExamUnitAnalytics(examId));
+    }
+    @GetMapping("/analytics/course/{courseId}/unit/average")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public List<AnalyticsService.UnitAnalytics> getCourseUnitAnalytics(
+            @PathVariable Long courseId) {
+        return analyticsService.getCourseUnitAnalytics(courseId);
     }
 }
