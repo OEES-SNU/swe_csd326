@@ -51,11 +51,9 @@ public class ResultController {
         return ResponseEntity.ok(analyticsService.getCourseAverage(courseId));
     }
 
-    @GetMapping("/analytics/exam/{examId}/units")
+    @GetMapping("/analytics/exam/{examId}/unit/average")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<AnalyticsService.UnitAnalytics>> getUnitAnalytics(@PathVariable Long examId) {
         return ResponseEntity.ok(analyticsService.getUnitAnalytics(examId));
     }
-
-
 }
