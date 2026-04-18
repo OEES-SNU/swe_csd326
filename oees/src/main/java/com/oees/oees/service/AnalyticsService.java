@@ -163,4 +163,33 @@ public class AnalyticsService {
 
         return result;
     }
+
+    @Data
+    @Builder
+    public static class QuestionDifficulty {
+        private Long questionId;
+        private String content;
+        private Double difficultyPercentage;
+    }
+
+    @Transactional(readOnly = true)
+    public List<QuestionDifficulty> getQuestionDifficulty(Long examId) {
+
+        List<Object[]> data = responseRepository.getQuestionDifficultyData(examId);
+
+        return data.stream().map(row -> {
+            Long questionId = (Long) row[0];
+            String content = (String) row[1];
+            Long incorrect = (Long) row[2];
+            Long total = (Long) row[3];
+
+            double difficulty = total == 0 ? 0 : (incorrect * 100.0) / total;
+
+            return QuestionDifficulty.builder()
+                    .questionId(questionId)
+                    .content(content)
+                    .difficultyPercentage(difficulty)
+                    .build();
+        }).toList();
+    }
 }

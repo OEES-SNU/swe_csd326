@@ -21,4 +21,17 @@ public interface StudentResponseRepository extends JpaRepository<StudentResponse
 
     @Query("SELECT sr FROM StudentResponse sr WHERE sr.attempt.exam.course.id = :courseId AND sr.attempt.status = 'EVALUATED' AND sr.marksAwarded IS NOT NULL")
     List<StudentResponse> findEvaluatedResponsesByCourseId(Long courseId);
+
+    @Query("""
+    SELECT q.id, q.content,
+           SUM(CASE WHEN sr.marksAwarded = 0 THEN 1 ELSE 0 END),
+           COUNT(sr)
+    FROM StudentResponse sr
+    JOIN sr.question q
+    JOIN sr.attempt a
+    WHERE a.exam.id = :examId
+      AND a.status = 'EVALUATED'
+    GROUP BY q.id, q.content
+""")
+    List<Object[]> getQuestionDifficultyData(Long examId);
 }

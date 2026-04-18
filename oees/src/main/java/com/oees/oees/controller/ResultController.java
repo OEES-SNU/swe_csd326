@@ -62,4 +62,10 @@ public class ResultController {
             @PathVariable Long courseId) {
         return analyticsService.getCourseUnitAnalytics(courseId);
     }
+    @GetMapping("/analytics/exam/{examId}/question/difficulty")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<AnalyticsService.QuestionDifficulty>> getQuestionDifficulty(
+            @PathVariable Long examId) {
+        return ResponseEntity.ok(analyticsService.getQuestionDifficulty(examId));
+    }
 }
