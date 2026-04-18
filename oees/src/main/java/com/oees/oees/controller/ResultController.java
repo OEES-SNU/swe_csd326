@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/results")
@@ -49,4 +50,12 @@ public class ResultController {
     public ResponseEntity<Double> getCourseAverage(@PathVariable Long courseId) {
         return ResponseEntity.ok(analyticsService.getCourseAverage(courseId));
     }
+
+    @GetMapping("/analytics/exam/{examId}/units")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<AnalyticsService.UnitAnalytics>> getUnitAnalytics(@PathVariable Long examId) {
+        return ResponseEntity.ok(analyticsService.getUnitAnalytics(examId));
+    }
+
+
 }

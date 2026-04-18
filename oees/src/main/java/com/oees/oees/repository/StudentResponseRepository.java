@@ -15,4 +15,7 @@ public interface StudentResponseRepository extends JpaRepository<StudentResponse
     @Query("SELECT COUNT(sr) FROM StudentResponse sr WHERE sr.question.id = :questionId " +
             "AND sr.marksAwarded = 0 AND sr.attempt.exam.id = :examId")
     long countIncorrectResponses(Long examId, Long questionId);
+
+    @Query("SELECT sr FROM StudentResponse sr WHERE sr.attempt.exam.id = :examId AND sr.attempt.status = 'EVALUATED'")
+    List<StudentResponse> findEvaluatedResponsesByExamId(Long examId);
 }
