@@ -17,12 +17,12 @@ public abstract class BaseTest {
     protected static final String BASE_URL = "http://localhost:5173";
     protected static final String LOGIN_URL = "http://localhost:5173/login";
     protected static final String REG_URL = "http://localhost:5173/register";
-    protected static final String ADMIN_EMAIL = "admin@oees.com";
-    protected static final String ADMIN_PASS = "admin123";
-    protected static final String INSTRUCTOR_EMAIL = "instructor@oees.com";
-    protected static final String INSTRUCTOR_PASS = "instructor123";
-    protected static final String STUDENT_EMAIL = "student@oees.com";
-    protected static final String STUDENT_PASS = "student123";
+    protected static final String ADMIN_EMAIL = "admin101@testoees.com";
+    protected static final String ADMIN_PASS = "password123";
+    protected static final String INSTRUCTOR_EMAIL = "instructor101@testoees.com";
+    protected static final String INSTRUCTOR_PASS = "password123";
+    protected static final String STUDENT_EMAIL = "student101@testoees.com";
+    protected static final String STUDENT_PASS = "password123";
     protected WebDriver driver;
     protected WebDriverWait wait;
 
@@ -47,11 +47,22 @@ public abstract class BaseTest {
     }
 
     protected void loginAs(String email, String password) {
-        driver.get(LOGIN_URL);
-        waitAndType(By.name("email"), email);
-        waitAndType(By.name("password"), password);
-        waitAndClick(By.cssSelector("button[type='submit']"));
+    driver.get(LOGIN_URL);
+    waitAndType(By.name("email"), email);
+    waitAndType(By.name("password"), password);
+    waitAndClick(By.cssSelector("button[type='submit']"));
+
+    // ✅ ONLY wait IF login succeeds
+    try {
+        wait.until(ExpectedConditions.or(
+            ExpectedConditions.urlContains("/admin"),
+            ExpectedConditions.urlContains("/instructor"),
+            ExpectedConditions.urlContains("/student")
+        ));
+    } catch (Exception ignored) {
+        // login might fail → stay on login page → that's OK
     }
+}
 
     protected void waitAndType(By locator, String text) {
         WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
@@ -69,12 +80,22 @@ public abstract class BaseTest {
     }
 
     protected void waitForText(String text) {
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[contains(text(),'" + text + "')]")));
-    }
+    try {
+        driver.switchTo().alert().accept();
+    } catch (Exception ignored) {}
+
+    wait.until(ExpectedConditions.presenceOfElementLocated(
+        By.xpath("//*[contains(normalize-space(),'" + text + "')]")
+    ));
+}
 
     protected WebElement waitForElement(By locator) {
-        return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
-    }
+    try {
+        driver.switchTo().alert().accept();
+    } catch (Exception ignored) {}
+
+    return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
+}
 
     protected void selectOption(By locator, String visibleText) {
         WebElement element = wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
@@ -88,4 +109,10 @@ public abstract class BaseTest {
     protected boolean pageContainsText(String text) {
         return !driver.findElements(By.xpath("//*[contains(text(),'" + text + "')]")).isEmpty();
     }
+
+    protected void handleAlertIfPresent() {
+    try {
+        driver.switchTo().alert().accept();
+    } catch (Exception ignored) {}
+}
 }

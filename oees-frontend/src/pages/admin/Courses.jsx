@@ -136,7 +136,7 @@ export default function Courses() {
       )}
 
       {/* Create Course Modal */}
-      <Modal open={createOpen} onClose={() => { setCreateOpen(false); setFormError('') }} title="Create Course">
+      <Modal open={createOpen} onClose={() => { setCreateOpen(false); setFormError('') }} >
         <form onSubmit={handleCreate} className="space-y-4">
           {formError && (
             <div className="px-3 py-2.5 bg-red-50 border border-red-200 rounded text-sm text-red-700">
@@ -167,7 +167,7 @@ export default function Courses() {
       </Modal>
 
       {/* Assign Instructor Modal */}
-      <Modal open={!!assignOpen} onClose={() => { setAssignOpen(null); setFormError('') }} title={`Assign Instructor — ${assignOpen?.courseName}`}>
+      <Modal open={!!assignOpen} onClose={() => { setAssignOpen(null); setFormError('') }} title="Assign Instructor">
         <form onSubmit={handleAssign} className="space-y-4">
           {formError && (
             <div className="px-3 py-2.5 bg-red-50 border border-red-200 rounded text-sm text-red-700">
