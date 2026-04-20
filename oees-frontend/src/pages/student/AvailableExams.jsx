@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import api from '../../api/axios'
 
 const statusBadge = (s) => {
-  const map = { DRAFT: 'badge-gray', SCHEDULED: 'badge-blue', ACTIVE: 'badge-green', EXPIRED: 'badge-red' }
+  const map = { DRAFT: 'badge-gray', SCHEDULED: 'badge-blue', ACTIVE: 'badge-green', EXPIRED: 'badge-red', SUBMITTED: 'badge-blue', EVALUATED: 'badge-green' }
   return <span className={map[s] ?? 'badge-gray'}>{s}</span>
 }
 
@@ -11,14 +11,21 @@ const fmt = (dt) => dt ? new Date(dt).toLocaleString([], { dateStyle: 'medium', 
 
 export default function AvailableExams() {
   const [exams, setExams] = useState([])
+  const [pastAttempts, setPastAttempts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [starting, setStarting] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
-    api.get('/exams/available')
-      .then((r) => setExams(r.data))
+    Promise.all([
+      api.get('/exams/available'),
+      api.get('/exams/student/attempted'),
+    ])
+      .then(([availRes, pastRes]) => {
+        setExams(availRes.data)
+        setPastAttempts(pastRes.data)
+      })
       .catch(() => setError('Failed to load exams.'))
       .finally(() => setLoading(false))
   }, [])
@@ -50,45 +57,73 @@ export default function AvailableExams() {
 
       {loading ? (
         <div className="text-sm text-gray-400 py-12 text-center">Loading…</div>
-      ) : exams.length === 0 ? (
-        <div className="card p-12 text-center">
-          <p className="text-gray-400 text-sm">No exams available right now.</p>
-          <p className="text-gray-300 text-xs mt-1">Check back later or contact your instructor.</p>
-        </div>
       ) : (
-        <div className="grid gap-4">
-          {exams.map((ex) => (
-            <div key={ex.id} className="card p-5 flex items-center gap-6">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-base font-semibold text-gray-900">{ex.title}</h2>
-                  {statusBadge(ex.status)}
+        <>
+          {exams.length === 0 ? (
+            <div className="card p-12 text-center">
+              <p className="text-gray-400 text-sm">No exams available right now.</p>
+              <p className="text-gray-300 text-xs mt-1">Check back later or contact your instructor.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {exams.map((ex) => (
+                <div key={ex.id} className="card p-5 flex items-center gap-6">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h2 className="text-base font-semibold text-gray-900">{ex.title}</h2>
+                      {statusBadge(ex.status)}
+                    </div>
+                    <p className="text-sm text-gray-500">{ex.courseName}</p>
+                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
+                      <span>{ex.durationMinutes} min</span>
+                      <span>{ex.totalMarks} marks</span>
+                      <span>Pass: {ex.passMark}</span>
+                      <span>{ex.questionCount} questions</span>
+                      <span>Max attempts: {ex.maxAttempts}</span>
+                    </div>
+                    <div className="flex items-center gap-4 mt-1 text-xs text-gray-400">
+                      <span>Starts: {fmt(ex.startTime)}</span>
+                      <span>Ends: {fmt(ex.endTime)}</span>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <button
+                      className="btn-primary"
+                      disabled={ex.status !== 'ACTIVE' || starting === ex.id}
+                      onClick={() => startExam(ex.id)}
+                    >
+                      {starting === ex.id ? 'Starting…' : 'Start exam'}
+                    </button>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-500">{ex.courseName}</p>
-                <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
-                  <span>{ex.durationMinutes} min</span>
-                  <span>{ex.totalMarks} marks</span>
-                  <span>Pass: {ex.passMark}</span>
-                  <span>{ex.questionCount} questions</span>
-                  <span>Max attempts: {ex.maxAttempts}</span>
-                </div>
-                <div className="flex items-center gap-4 mt-1 text-xs text-gray-400">
-                  <span>Starts: {fmt(ex.startTime)}</span>
-                  <span>Ends: {fmt(ex.endTime)}</span>
-                </div>
-              </div>
-              <div className="flex-shrink-0">
-                <button
-                  className="btn-primary"
-                  disabled={ex.status !== 'ACTIVE' || starting === ex.id}
-                  onClick={() => startExam(ex.id)}
-                >
-                  {starting === ex.id ? 'Starting…' : 'Start exam'}
-                </button>
+              ))}
+            </div>
+          )}
+
+          {pastAttempts.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-sm font-semibold text-gray-700 mb-3">Past Attempts</h2>
+              <div className="card divide-y divide-gray-100">
+                {pastAttempts.map((a) => (
+                  <div key={a.attemptId} className="px-5 py-3 flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{a.examTitle}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Attempt #{a.attemptNumber} · Submitted {fmt(a.submittedAt)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      {a.totalScore != null && (
+                        <span className="text-xs text-gray-500">{a.totalScore} pts</span>
+                      )}
+                      {statusBadge(a.status)}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </>
   )

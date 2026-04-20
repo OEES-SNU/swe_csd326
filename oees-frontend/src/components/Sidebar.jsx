@@ -65,7 +65,7 @@ const icons = {
 const navByRole = {
   ADMIN: [
     { to: '/admin/courses', icon: icons.courses, label: 'Courses' },
-    { to: '/admin/students', icon: icons.students, label: 'Students' },
+    { to: '/admin/students', icon: icons.students, label: 'Users' },
     { to: '/admin/enrollments', icon: icons.enroll, label: 'Enrollments' },
   ],
   INSTRUCTOR: [
