@@ -50,7 +50,7 @@ class AdminUITest extends BaseTest {
     @DisplayName("TC-UI-ADMIN-01: Admin dashboard renders sidebar navigation")
     void adminDashboard_rendersSidebar() {
         waitForText("Courses");
-        assertThat(pageContainsText("Students")).isTrue();
+        assertThat(waitForElement(By.xpath("//a[@href='/admin/students' and contains(normalize-space(),'Users')]")).isDisplayed()).isTrue();
     }
 
     // TC-UI-ADMIN-02: Courses page loads with table and Add button

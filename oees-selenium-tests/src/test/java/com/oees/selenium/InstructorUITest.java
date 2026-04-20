@@ -44,11 +44,14 @@ class InstructorUITest extends BaseTest {
     void questionsPage_rendersTableAndButton() {
         driver.get(BASE_URL + "/instructor/questions");
         waitForText("Question Bank");
-        assertThat(pageContainsText("Type")).isTrue();
-        assertThat(pageContainsText("Difficulty")).isTrue();
-        assertThat(pageContainsText("Marks")).isTrue();
         assertThat(waitForElement(
-                By.xpath("//button[contains(text(),'Add question')]")).isDisplayed()).isTrue();
+                By.xpath("//button[contains(normalize-space(),'Add question')]")).isDisplayed()).isTrue();
+        assertThat(waitForElement(
+                By.xpath("//table//th[contains(normalize-space(),'Type')]")).isDisplayed()).isTrue();
+        assertThat(waitForElement(
+                By.xpath("//table//th[contains(normalize-space(),'Difficulty')]")).isDisplayed()).isTrue();
+        assertThat(waitForElement(
+                By.xpath("//table//th[contains(normalize-space(),'Marks')]")).isDisplayed()).isTrue();
     }
 
     // TC-UI-INSTR-03: Add Question modal opens with MCQ fields by default
