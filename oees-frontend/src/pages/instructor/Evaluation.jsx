@@ -41,6 +41,7 @@ export default function Evaluation() {
     setAttempts([])
     setSelectedAttempt(null)
     setResponses([])
+    setError('')
 
     api
         .get(`/exams/course/${selectedCourse}`)
@@ -80,16 +81,13 @@ export default function Evaluation() {
           `/evaluation/attempt/${attempt.id}/pending`
       )
 
-      console.log('Pending responses:', data)
-
       const safeData = Array.isArray(data) ? data : []
-
       setResponses(safeData)
 
       if (safeData.length === 0) {
         setError('No pending responses for this attempt.')
       }
-    } catch (err) {
+    } catch {
       setResponses([])
       setError('Failed to load responses.')
     } finally {
@@ -120,7 +118,8 @@ export default function Evaluation() {
 
   return (
       <>
-        <div className="page-header">
+        {/* Header */}
+        <div className="page-header mb-8">
           <div>
             <h1 className="page-title">Evaluation</h1>
             <p className="page-subtitle">
@@ -129,179 +128,205 @@ export default function Evaluation() {
           </div>
         </div>
 
-        {/* Course selector */}
-        <div className="flex items-center gap-3 mb-6">
-          <label className="text-sm font-medium text-gray-700">Course:</label>
+        {/* Course Selector */}
+        <div className="card p-5 mb-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="text-sm font-medium text-gray-700">
+              Course:
+            </label>
 
-          <select
-              className="select max-w-xs"
-              value={selectedCourse}
-              onChange={(e) => setSelectedCourse(e.target.value)}
-          >
-            {courses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.courseCode} — {c.courseName}
-                </option>
-            ))}
-          </select>
+            <select
+                className="select min-w-[320px]"
+                value={selectedCourse}
+                onChange={(e) => setSelectedCourse(e.target.value)}
+            >
+              {courses.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.courseCode} — {c.courseName}
+                  </option>
+              ))}
+            </select>
+
+            {selectedExam && (
+                <div className="ml-auto text-sm text-gray-500">
+                  Selected Exam:{' '}
+                  <span className="font-medium text-gray-800">
+                {selectedExam.title}
+              </span>
+                </div>
+            )}
+          </div>
         </div>
 
-        <div className="flex gap-6 min-h-0">
-          {/* Exam list */}
-          <div className="w-64 flex-shrink-0">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              Exams
-            </p>
+        {/* Error */}
+        {error && !loading && (
+            <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 mb-6">
+              {error}
+            </div>
+        )}
 
-            <div className="card divide-y divide-gray-100">
-              {exams.length === 0 && (
-                  <p className="text-sm text-gray-400 p-4">No exams found.</p>
-              )}
+        {/* Main Layout */}
+        <div className="grid grid-cols-12 gap-6">
 
-              {exams.map((ex) => (
-                  <button
-                      key={ex.id}
-                      onClick={() => loadAttempts(ex)}
-                      className={`w-full text-left px-4 py-3 transition-colors hover:bg-gray-50 ${
-                          selectedExam?.id === ex.id
-                              ? 'bg-gray-50 border-l-2 border-gray-900'
-                              : ''
-                      }`}
-                  >
-                    <p
-                        className={`text-sm font-medium ${
+          {/* LEFT SIDE */}
+          <div className="col-span-4 space-y-6">
+
+            {/* Exams */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                Exams
+              </p>
+
+              <div className="card divide-y divide-gray-100 max-h-[360px] overflow-y-auto">
+                {exams.length === 0 && (
+                    <p className="text-sm text-gray-400 p-4">
+                      No exams found.
+                    </p>
+                )}
+
+                {exams.map((ex) => (
+                    <button
+                        key={ex.id}
+                        onClick={() => loadAttempts(ex)}
+                        className={`w-full text-left px-4 py-4 hover:bg-gray-50 transition ${
                             selectedExam?.id === ex.id
-                                ? 'text-gray-900'
-                                : 'text-gray-700'
+                                ? 'bg-gray-50 border-l-4 border-gray-900'
+                                : ''
                         }`}
                     >
-                      {ex.title}
-                    </p>
+                      <p className="font-medium text-gray-900">
+                        {ex.title}
+                      </p>
 
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {ex.questionCount} questions · {ex.totalMarks} marks
-                    </p>
-                  </button>
-              ))}
+                      <p className="text-xs text-gray-400 mt-1">
+                        {ex.questionCount} questions · {ex.totalMarks} marks
+                      </p>
+                    </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Attempts list */}
-          <div className="w-64 flex-shrink-0">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              Submitted Attempts
-            </p>
+            {/* Attempts */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                Submitted Attempts
+              </p>
 
-            <div className="card divide-y divide-gray-100">
-              {!selectedExam && (
-                  <p className="text-sm text-gray-400 p-4">Select an exam.</p>
-              )}
+              <div className="card divide-y divide-gray-100 max-h-[360px] overflow-y-auto">
+                {!selectedExam && (
+                    <p className="text-sm text-gray-400 p-4">
+                      Select an exam.
+                    </p>
+                )}
 
-              {selectedExam && loading && !selectedAttempt && (
-                  <p className="text-sm text-gray-400 p-4">Loading…</p>
-              )}
+                {selectedExam && loading && !selectedAttempt && (
+                    <p className="text-sm text-gray-400 p-4">
+                      Loading...
+                    </p>
+                )}
 
-              {selectedExam && !loading && attempts.length === 0 && (
-                  <p className="text-sm text-gray-400 p-4">
-                    No submitted attempts yet.
-                  </p>
-              )}
+                {selectedExam &&
+                    !loading &&
+                    attempts.length === 0 && (
+                        <p className="text-sm text-gray-400 p-4">
+                          No submitted attempts yet.
+                        </p>
+                    )}
 
-              {attempts.map((a) => (
-                  <button
-                      key={a.id}
-                      onClick={() => loadResponses(a)}
-                      className={`w-full text-left px-4 py-3 transition-colors hover:bg-gray-50 ${
-                          selectedAttempt?.id === a.id
-                              ? 'bg-gray-50 border-l-2 border-gray-900'
-                              : ''
-                      }`}
-                  >
-                    <p
-                        className={`text-sm font-medium ${
+                {attempts.map((a) => (
+                    <button
+                        key={a.id}
+                        onClick={() => loadResponses(a)}
+                        className={`w-full text-left px-4 py-4 hover:bg-gray-50 transition ${
                             selectedAttempt?.id === a.id
-                                ? 'text-gray-900'
-                                : 'text-gray-700'
+                                ? 'bg-gray-50 border-l-4 border-gray-900'
+                                : ''
                         }`}
                     >
-                      {a.studentName ?? a.student?.name ?? `Student #${a.id}`}
-                    </p>
+                      <p className="font-medium text-gray-900">
+                        {a.studentName ??
+                            a.student?.name ??
+                            `Student #${a.id}`}
+                      </p>
 
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      Attempt #{a.attemptNumber} · {fmt(a.submittedAt)}
-                    </p>
-                  </button>
-              ))}
+                      <p className="text-xs text-gray-400 mt-1">
+                        Attempt #{a.attemptNumber} · {fmt(a.submittedAt)}
+                      </p>
+                    </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Responses */}
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              Responses
+          {/* RIGHT SIDE */}
+          <div className="col-span-8">
+
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Responses
+              </p>
 
               {selectedAttempt && (
-                  <span className="ml-2 normal-case font-normal text-gray-400">
-                —{' '}
+                  <p className="text-sm text-gray-400">
                     {selectedAttempt.studentName ??
                         selectedAttempt.student?.name ??
-                        'Student'}
-                    , Attempt #{selectedAttempt.attemptNumber}
-              </span>
+                        'Student'}{' '}
+                    · Attempt #{selectedAttempt.attemptNumber}
+                  </p>
               )}
-            </p>
+            </div>
 
             {!selectedAttempt && (
-                <div className="card p-8 text-center text-sm text-gray-400">
+                <div className="card p-12 text-center text-gray-400">
                   Select an attempt to review responses.
                 </div>
             )}
 
             {selectedAttempt && loading && (
-                <div className="text-sm text-gray-400 py-8 text-center">
-                  Loading…
-                </div>
-            )}
-
-            {error && !loading && (
-                <div className="px-3 py-2.5 bg-red-50 border border-red-200 rounded text-sm text-red-700 mb-4">
-                  {error}
+                <div className="card p-12 text-center text-gray-400">
+                  Loading...
                 </div>
             )}
 
             {!loading &&
                 Array.isArray(responses) &&
                 responses.length > 0 && (
-                    <div className="space-y-4">
-                      {responses.map((r) => (
-                          <div key={r.responseId} className="card p-5">
-                            <div className="flex items-start justify-between gap-4 mb-3">
+                    <div className="space-y-5">
+                      {responses.map((r, index) => (
+                          <div
+                              key={r.responseId}
+                              className="card p-6"
+                          >
+                            <div className="flex items-start justify-between gap-4 mb-4">
                               <div>
                                 <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
-                                  {r.questionType?.replace(/_/g, ' ')} · {r.maxMarks}{' '}
-                                  marks
+                                  Question {index + 1} ·{' '}
+                                  {r.questionType?.replace(/_/g, ' ')} ·{' '}
+                                  {r.maxMarks} marks
                                 </p>
 
-                                <p className="text-sm font-medium text-gray-900">
+                                <p className="font-medium text-gray-900">
                                   {r.questionContent}
                                 </p>
                               </div>
 
                               {saved[r.responseId] && (
-                                  <span className="badge-green flex-shrink-0">
+                                  <span className="badge-green">
                           Graded
                         </span>
                               )}
                             </div>
 
-                            <div className="bg-gray-50 border border-gray-100 rounded p-3 mb-4">
-                              <p className="text-xs text-gray-400 mb-1">
-                                Student response
+                            <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 mb-5">
+                              <p className="text-xs text-gray-400 mb-2">
+                                Student Response
                               </p>
 
                               <p className="text-sm text-gray-700 whitespace-pre-wrap">
                                 {r.responseText || (
-                                    <em className="text-gray-400">No response</em>
+                                    <em className="text-gray-400">
+                                      No response
+                                    </em>
                                 )}
                               </p>
                             </div>
@@ -311,13 +336,14 @@ export default function Evaluation() {
                                   type="number"
                                   min="0"
                                   max={r.maxMarks}
-                                  className="input max-w-[120px]"
-                                  placeholder={`0 – ${r.maxMarks}`}
+                                  className="input w-28"
+                                  placeholder={`0-${r.maxMarks}`}
                                   value={grades[r.responseId] ?? ''}
                                   onChange={(e) =>
                                       setGrades((p) => ({
                                         ...p,
-                                        [r.responseId]: e.target.value,
+                                        [r.responseId]:
+                                        e.target.value,
                                       }))
                                   }
                                   disabled={saved[r.responseId]}
@@ -328,15 +354,18 @@ export default function Evaluation() {
                                   disabled={
                                       saving[r.responseId] ||
                                       saved[r.responseId] ||
-                                      grades[r.responseId] === undefined
+                                      grades[r.responseId] ===
+                                      undefined
                                   }
-                                  onClick={() => handleGrade(r.responseId)}
+                                  onClick={() =>
+                                      handleGrade(r.responseId)
+                                  }
                               >
                                 {saving[r.responseId]
-                                    ? 'Saving…'
+                                    ? 'Saving...'
                                     : saved[r.responseId]
                                         ? 'Saved'
-                                        : 'Save grade'}
+                                        : 'Save Grade'}
                               </button>
                             </div>
                           </div>
