@@ -4,17 +4,24 @@ import com.oees.oees.dto.request.ExamRequest;
 import com.oees.oees.dto.response.ExamResponse;
 import com.oees.oees.entity.Course;
 import com.oees.oees.entity.Enrollment;
+import com.oees.oees.entity.StudentAttempt;
 import com.oees.oees.entity.User;
+import com.oees.oees.enums.AttemptStatus;
 import com.oees.oees.repository.EnrollmentRepository;
+import com.oees.oees.repository.StudentAttemptRepository;
 import com.oees.oees.repository.userRepository;
 import com.oees.oees.security.JwtUtil;
 import com.oees.oees.service.ExamService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/exams")
@@ -25,6 +32,7 @@ public class ExamController {
     private final JwtUtil jwtUtil;
     private final userRepository userRepository;
     private final EnrollmentRepository enrollmentRepository;
+    private final StudentAttemptRepository studentAttemptRepository;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
@@ -65,5 +73,30 @@ public class ExamController {
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<List<ExamResponse>> getExamsByCourse(@PathVariable Long courseId) {
         return ResponseEntity.ok(examService.getExamsByCourse(courseId));
+    }
+
+    @GetMapping("/student/attempted")
+    @PreAuthorize("hasRole('STUDENT')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<Map<String, Object>>> getAttemptedExams(
+            @RequestHeader("Authorization") String token) {
+        String email = jwtUtil.extractUsername(token.substring(7));
+        Long studentId = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found")).getId();
+        List<Map<String, Object>> result = studentAttemptRepository.findByStudentId(studentId).stream()
+            .filter(a -> a.getStatus() != AttemptStatus.IN_PROGRESS)
+            .map(a -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("examId", a.getExam().getId());
+                map.put("examTitle", a.getExam().getTitle());
+                map.put("attemptId", a.getId());
+                map.put("attemptNumber", a.getAttemptNumber());
+                map.put("status", a.getStatus());
+                map.put("submittedAt", a.getSubmittedAt());
+                map.put("totalScore", a.getTotalScore());
+                return map;
+            })
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(result);
     }
 }

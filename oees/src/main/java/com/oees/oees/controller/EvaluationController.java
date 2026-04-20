@@ -1,6 +1,7 @@
 package com.oees.oees.controller;
 
 import com.oees.oees.dto.request.EvaluateResponseRequest;
+import com.oees.oees.dto.response.PendingResponseDto;
 import com.oees.oees.entity.StudentAttempt;
 import com.oees.oees.entity.StudentResponse;
 import com.oees.oees.enums.AttemptStatus;
@@ -52,8 +53,20 @@ public class EvaluationController {
 
     @GetMapping("/attempt/{attemptId}/pending")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<StudentResponse>> getPendingDescriptive(@PathVariable Long attemptId) {
-        return ResponseEntity.ok(evaluationService.getPendingDescriptive(attemptId));
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<PendingResponseDto>> getPendingDescriptive(@PathVariable Long attemptId) {
+        List<PendingResponseDto> dtos = evaluationService.getPendingDescriptive(attemptId).stream()
+            .map(r -> new PendingResponseDto(
+                r.getId(),
+                r.getQuestion().getId(),
+                r.getQuestion().getContent(),
+                r.getQuestion().getType().name(),
+                r.getQuestion().getMarks(),
+                r.getResponseText(),
+                r.getSelectedOption()
+            ))
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     @PostMapping("/grade")
