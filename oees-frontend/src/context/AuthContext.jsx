@@ -4,6 +4,7 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
+  const [isAuthReady, setIsAuthReady] = useState(false)
 
   useEffect(() => {
     try {
@@ -15,6 +16,8 @@ export function AuthProvider({ children }) {
       }
     } catch {
       logout()
+    } finally {
+      setIsAuthReady(true)
     }
   }, [])
 
@@ -40,6 +43,7 @@ export function AuthProvider({ children }) {
             login,
             logout,
             isAuthenticated,
+            isAuthReady,
           }}
       >
         {children}

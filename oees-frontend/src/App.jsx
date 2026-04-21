@@ -10,7 +10,9 @@ import StudentDashboard from './pages/student/StudentDashboard'
 import TakeExam from './pages/student/TakeExam'
 
 function ProtectedRoute({ children, role }) {
-    const { user } = useAuth()
+    const { user, isAuthReady } = useAuth()
+
+    if (!isAuthReady) return null
 
     if (!user) return <Navigate to="/login" replace />
     if (role && user.role !== role) return <Navigate to="/login" replace />
@@ -19,7 +21,9 @@ function ProtectedRoute({ children, role }) {
 }
 
 function RoleRedirect() {
-    const { user } = useAuth()
+    const { user, isAuthReady } = useAuth()
+
+    if (!isAuthReady) return null
 
     if (!user) return <Navigate to="/login" replace />
     if (user.role === 'ADMIN') return <Navigate to="/admin" replace />
