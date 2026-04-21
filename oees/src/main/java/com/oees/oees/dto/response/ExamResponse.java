@@ -19,4 +19,5 @@ public class ExamResponse {
     private LocalDateTime endTime;
     private ExamStatus status;
     private int questionCount;
+    private String unit;
 }

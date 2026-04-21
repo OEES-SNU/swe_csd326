@@ -108,6 +108,15 @@ public class ExamService {
     }
 
     private ExamResponse toResponse(Exam e, int qCount) {
+
+        String unit = e.getExamQuestions() == null || e.getExamQuestions().isEmpty()
+                ? null
+                : e.getExamQuestions().stream()
+                .map(eq -> eq.getQuestion().getUnit())
+                .filter(u -> u != null && !u.isBlank())
+                .distinct()
+                .collect(Collectors.joining(", "));
+
         return ExamResponse.builder()
                 .id(e.getId())
                 .title(e.getTitle())
@@ -120,6 +129,7 @@ public class ExamService {
                 .endTime(e.getEndTime())
                 .status(e.getStatus())
                 .questionCount(qCount)
+                .unit(unit)
                 .build();
     }
 }
