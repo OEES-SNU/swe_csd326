@@ -3,6 +3,7 @@ package com.oees.oees.config;
 import com.oees.oees.security.CustomUserDetailsService;
 import com.oees.oees.security.JwtFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -31,6 +32,9 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
     private final CustomUserDetailsService userDetailsService;
+
+    @Value("${FRONTEND_URL:http://localhost:5173}")
+    private String frontendUrl;
 
     // here bean is simply the object in the IOC class
     @Bean
@@ -79,7 +83,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOrigins(List.of(frontendUrl));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
