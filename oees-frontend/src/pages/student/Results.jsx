@@ -11,11 +11,18 @@ export default function Results() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    api.get('/exams/available')
-      .then((r) => {
-        setExams(r.data)
-        if (r.data.length > 0) setSelectedExam(String(r.data[0].id))
+    api.get('/exams/student/attempted').then((r) => {
+      // deduplicate by examId — keep latest attempt per exam
+      const seen = new Set()
+      const unique = r.data.filter((a) => {
+        if (seen.has(a.examId)) return false
+        seen.add(a.examId)
+        return true
       })
+      const examList = unique.map((a) => ({ id: a.examId, title: a.examTitle }))
+      setExams(examList)
+      if (examList.length > 0) setSelectedExam(String(examList[0].id))
+    })
   }, [])
 
   useEffect(() => {
@@ -52,7 +59,7 @@ export default function Results() {
         <select className="select max-w-sm" value={selectedExam}
           onChange={(e) => setSelectedExam(e.target.value)}>
           {exams.map((ex) => (
-            <option key={ex.id} value={ex.id}>{ex.title} — {ex.courseName}</option>
+            <option key={ex.id} value={ex.id}>{ex.title}</option>
           ))}
         </select>
       </div>

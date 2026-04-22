@@ -25,11 +25,14 @@ const EMPTY_FORM = {
   courseId: '',
 }
 
+const FILTERS_INIT = { search: '', type: '', difficulty: '', unit: '' }
+
 export default function Questions() {
   const [courses, setCourses] = useState([])
   const [selectedCourse, setSelectedCourse] = useState('')
   const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(false)
+  const [filters, setFilters] = useState(FILTERS_INIT)
   const [modalOpen, setModalOpen] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
@@ -51,6 +54,7 @@ export default function Questions() {
 
   useEffect(() => {
     if (!selectedCourse) return
+    setFilters(FILTERS_INIT)
     setLoading(true)
     api.get(`/instructor/questions/course/${selectedCourse}`)
       .then((r) => setQuestions(r.data))
@@ -121,6 +125,18 @@ export default function Questions() {
 
   const isMCQ = form.type === 'MULTIPLE_CHOICE'
 
+  const units = [...new Set(questions.map((q) => q.unit).filter(Boolean))]
+
+  const filtered = questions.filter((q) => {
+    if (filters.search && !q.content.toLowerCase().includes(filters.search.toLowerCase())) return false
+    if (filters.type && q.type !== filters.type) return false
+    if (filters.difficulty && q.difficultyLevel !== filters.difficulty) return false
+    if (filters.unit && q.unit !== filters.unit) return false
+    return true
+  })
+
+  const hasFilters = filters.search || filters.type || filters.difficulty || filters.unit
+
   return (
     <>
       <div className="page-header">
@@ -131,14 +147,57 @@ export default function Questions() {
         <button className="btn-primary" onClick={openCreate}>Add question</button>
       </div>
 
-      <div className="flex items-center gap-3 mb-5">
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
         <label className="text-sm font-medium text-gray-700">Course:</label>
         <select className="select max-w-xs" value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)}>
           {courses.map((c) => (
             <option key={c.id} value={c.id}>{c.courseCode} — {c.courseName}</option>
           ))}
         </select>
-        <span className="text-sm text-gray-400">{questions.length} questions</span>
+      </div>
+
+      {/* Filter bar */}
+      <div className="flex items-center gap-2 mb-5 flex-wrap">
+        <div className="relative">
+          <svg className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+          <input
+            className="input pl-8 w-56"
+            placeholder="Search questions…"
+            value={filters.search}
+            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+          />
+        </div>
+
+        <select className="select max-w-[150px]" value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })}>
+          <option value="">All types</option>
+          <option value="MULTIPLE_CHOICE">MCQ</option>
+          <option value="FILL_IN_THE_BLANK">Fill-in</option>
+          <option value="DESCRIPTIVE">Descriptive</option>
+        </select>
+
+        <select className="select max-w-[150px]" value={filters.difficulty} onChange={(e) => setFilters({ ...filters, difficulty: e.target.value })}>
+          <option value="">All difficulties</option>
+          <option value="EASY">Easy</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="HARD">Hard</option>
+        </select>
+
+        <select className="select max-w-[150px]" value={filters.unit} onChange={(e) => setFilters({ ...filters, unit: e.target.value })}>
+          <option value="">All units</option>
+          {units.map((u) => <option key={u} value={u}>{u}</option>)}
+        </select>
+
+        {hasFilters && (
+          <button className="text-xs text-gray-400 hover:text-gray-700 underline" onClick={() => setFilters(FILTERS_INIT)}>
+            Clear
+          </button>
+        )}
+
+        <span className="text-sm text-gray-400 ml-auto">
+          {hasFilters ? `${filtered.length} of ${questions.length}` : `${questions.length}`} questions
+        </span>
       </div>
 
       {loading ? (
@@ -157,14 +216,14 @@ export default function Questions() {
               </tr>
             </thead>
             <tbody>
-              {questions.length === 0 && (
+              {filtered.length === 0 && (
                 <tr>
                   <td colSpan={6} className="text-center text-gray-400 py-10">
-                    No questions for this course yet.
+                    {hasFilters ? 'No questions match the current filters.' : 'No questions for this course yet.'}
                   </td>
                 </tr>
               )}
-              {questions.map((q) => (
+              {filtered.map((q) => (
                 <tr key={q.id}>
                   <td className="max-w-xs">
                     <p className="truncate text-gray-900">{q.content}</p>

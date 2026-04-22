@@ -27,12 +27,16 @@ const statusBadge = (s) => {
   return <span className={map[s] ?? 'badge-gray'}>{s}</span>
 }
 
+// for user-entered times (startTime/endTime stored as IST)
 const fmt = (dt) =>
   dt
-    ? new Date(dt).toLocaleString([], {
-        dateStyle: 'medium',
-        timeStyle: 'short'
-      })
+    ? new Date(dt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
+    : '—'
+
+// for server-generated timestamps (stored as UTC on Railway)
+const fmtServer = (dt) =>
+  dt
+    ? new Date(dt + 'Z').toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
     : '—'
 
 export default function AvailableExams() {
@@ -166,7 +170,7 @@ export default function AvailableExams() {
                         {a.examTitle}
                       </p>
                       <p className="text-xs text-gray-400 mt-0.5">
-                        Attempt #{a.attemptNumber} · Submitted {fmt(a.submittedAt)}
+                        Attempt #{a.attemptNumber} · Submitted {fmtServer(a.submittedAt)}
                       </p>
                     </div>
 

@@ -2,12 +2,10 @@ import { useState, useEffect } from 'react'
 import api from '../../api/axios'
 
 const fmt = (dt) =>
-    dt
-        ? new Date(dt).toLocaleString([], {
-          dateStyle: 'medium',
-          timeStyle: 'short',
-        })
-        : '—'
+    dt ? new Date(dt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '—'
+
+const fmtServer = (dt) =>
+    dt ? new Date(dt + 'Z').toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '—'
 
 export default function Evaluation() {
   const [courses, setCourses] = useState([])
@@ -250,7 +248,7 @@ export default function Evaluation() {
                       </p>
 
                       <p className="text-xs text-gray-400 mt-1">
-                        Attempt #{a.attemptNumber} · {fmt(a.submittedAt)}
+                        Attempt #{a.attemptNumber} · {fmtServer(a.submittedAt)}
                       </p>
                     </button>
                 ))}

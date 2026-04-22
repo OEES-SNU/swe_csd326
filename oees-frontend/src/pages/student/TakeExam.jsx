@@ -7,6 +7,7 @@ function Timer({ durationMinutes, onExpire }) {
   const [remaining, setRemaining] = useState(secs)
   const onExpireRef = useRef(onExpire)
   onExpireRef.current = onExpire
+  const expired = useRef(false)
 
   useEffect(() => {
     if (!durationMinutes || durationMinutes <= 0) return
@@ -15,7 +16,6 @@ function Timer({ durationMinutes, onExpire }) {
       setRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(timer)
-          onExpireRef.current()
           return 0
         }
         return prev - 1
@@ -24,6 +24,14 @@ function Timer({ durationMinutes, onExpire }) {
 
     return () => clearInterval(timer)
   }, [])
+
+  // Fire onExpire outside the state updater so it runs reliably
+  useEffect(() => {
+    if (remaining === 0 && durationMinutes > 0 && !expired.current) {
+      expired.current = true
+      onExpireRef.current()
+    }
+  }, [remaining, durationMinutes])
 
   const h = Math.floor(remaining / 3600)
   const m = Math.floor((remaining % 3600) / 60)
