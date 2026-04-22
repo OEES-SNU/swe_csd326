@@ -43,6 +43,7 @@ public class ExamService {
                 .passMark(req.getPassMark())
                 .startTime(req.getStartTime())
                 .endTime(req.getEndTime())
+                .gradingScale(req.getGradingScale())
                 .status(req.getStartTime() != null ? ExamStatus.SCHEDULED : ExamStatus.DRAFT)
                 .build();
 

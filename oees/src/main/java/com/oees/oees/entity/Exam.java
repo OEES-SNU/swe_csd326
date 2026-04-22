@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
@@ -40,6 +41,10 @@ public class Exam {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private ExamStatus status = ExamStatus.DRAFT;
+
+    @Convert(converter = GradingScaleConverter.class)
+    @Column(columnDefinition = "TEXT")
+    private Map<String, Integer> gradingScale;
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ExamQuestion> examQuestions;

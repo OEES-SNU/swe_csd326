@@ -14,6 +14,8 @@ const DETAILS_FORM = {
   maxAttempts: '1', passMark: '', startTime: '', endTime: '',
 }
 
+const DEFAULT_GRADING = { 'A+': 90, 'A': 80, 'B': 70, 'C': 60, 'D': 50 }
+
 const FILTERS_INIT = { unit: '', difficulty: '', type: '' }
 
 export default function Exams() {
@@ -30,6 +32,7 @@ export default function Exams() {
   const [filters, setFilters] = useState(FILTERS_INIT)
   const [selectedQIds, setSelectedQIds] = useState([])
   const [details, setDetails] = useState(DETAILS_FORM)
+  const [gradingScale, setGradingScale] = useState(DEFAULT_GRADING)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
 
@@ -70,6 +73,7 @@ export default function Exams() {
     setFilters(FILTERS_INIT)
     setSelectedQIds([])
     setDetails(DETAILS_FORM)
+    setGradingScale(DEFAULT_GRADING)
     setFormError('')
     setWizardOpen(true)
   }
@@ -95,17 +99,22 @@ export default function Exams() {
     setSaving(true)
     setFormError('')
     try {
+      const scale = {}
+      for (const [grade, val] of Object.entries(gradingScale)) {
+        scale[grade] = Number(val)
+      }
       await api.post('/exams', {
         title: details.title,
         courseId: Number(selectedCourse),
         durationMinutes: Number(details.durationMinutes),
-        totalMarks: totalSelectedMarks, // locked: calculated from selected questions
+        totalMarks: totalSelectedMarks,
         maxAttempts: Number(details.maxAttempts),
         passMark: Number(details.passMark),
         startTime: details.startTime || null,
         endTime: details.endTime || null,
         questionIds: selectedQIds,
         autoSelect: null,
+        gradingScale: scale,
       })
       setWizardOpen(false)
       loadExams(selectedCourse)
@@ -496,6 +505,27 @@ export default function Exams() {
                                   onChange={(e) => setDetails({ ...details, endTime: e.target.value })}
                               />
                             </div>
+                          </div>
+
+                          {/* Grading Scale */}
+                          <div className="form-group mb-0">
+                            <label className="label">Grading Scale (minimum %)</label>
+                            <div className="grid grid-cols-5 gap-2">
+                              {['A+', 'A', 'B', 'C', 'D'].map((grade) => (
+                                <div key={grade} className="text-center">
+                                  <p className="text-xs text-gray-500 mb-1 font-medium">{grade}</p>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    className="input text-center px-1"
+                                    value={gradingScale[grade]}
+                                    onChange={(e) => setGradingScale({ ...gradingScale, [grade]: e.target.value })}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1.5">Scores below the D threshold are graded F</p>
                           </div>
 
                           {/* Selected questions summary */}

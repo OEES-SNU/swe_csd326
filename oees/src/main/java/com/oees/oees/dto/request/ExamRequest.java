@@ -2,8 +2,8 @@ package com.oees.oees.dto.request;
 
 import lombok.Data;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class ExamRequest {
@@ -15,8 +15,9 @@ public class ExamRequest {
     private Integer passMark;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private List<Long> questionIds; // manual selection
-    private AutoSelectCriteria autoSelect; // automated selection (null = manual)
+    private List<Long> questionIds;
+    private AutoSelectCriteria autoSelect;
+    private Map<String, Integer> gradingScale;
 
     @Data
     public static class AutoSelectCriteria {

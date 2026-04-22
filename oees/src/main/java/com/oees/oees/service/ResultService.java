@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -71,7 +72,7 @@ public class ResultService {
                     .findFirst().orElseThrow();
 
             int total = entry.getValue();
-            String grade = computeGrade(total, exam.getTotalMarks());
+            String grade = computeGrade(total, exam.getTotalMarks(), exam.getGradingScale());
             boolean passed = exam.getPassMark() != null && total >= exam.getPassMark();
 
             ExamResult result = resultRepository.findByAttemptId(attempt.getId())
@@ -115,18 +116,21 @@ public class ResultService {
                 .build();
     }
 
-    private String computeGrade(int marks, int max) {
+    private String computeGrade(int marks, int max, Map<String, Integer> gradingScale) {
         double pct = (double) marks / max * 100;
-        if (pct >= 90)
-            return "A+";
-        if (pct >= 80)
-            return "A";
-        if (pct >= 70)
-            return "B";
-        if (pct >= 60)
-            return "C";
-        if (pct >= 50)
-            return "D";
+        if (gradingScale != null && !gradingScale.isEmpty()) {
+            return gradingScale.entrySet().stream()
+                    .sorted((a, b) -> b.getValue() - a.getValue())
+                    .filter(e -> pct >= e.getValue())
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse("F");
+        }
+        if (pct >= 90) return "A+";
+        if (pct >= 80) return "A";
+        if (pct >= 70) return "B";
+        if (pct >= 60) return "C";
+        if (pct >= 50) return "D";
         return "F";
     }
 }
