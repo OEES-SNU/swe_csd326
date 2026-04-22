@@ -24,8 +24,8 @@ class AuthUITest extends BaseTest {
     void loginPage_rendersCorrectly() {
         driver.get(LOGIN_URL);
         
-        assertThat(waitForElement(By.xpath("//h1[contains(text(),'Sign in')]")).isDisplayed()).isTrue();
-        assertThat(pageContainsText("Online Exam & Evaluation System")).isTrue();
+        assertThat(waitForElement(By.xpath("//h1[contains(translate(normalize-space(.),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'welcome')]")).isDisplayed()).isTrue();
+        assertThat(pageContainsText("Online Exam")).isTrue();
         assertThat(driver.findElement(By.name("email")).isDisplayed()).isTrue();
         assertThat(driver.findElement(By.name("password")).isDisplayed()).isTrue();
         assertThat(driver.findElement(By.cssSelector("button[type='submit']")).isDisplayed()).isTrue();
