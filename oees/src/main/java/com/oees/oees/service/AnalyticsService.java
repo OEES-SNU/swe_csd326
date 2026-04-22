@@ -1,10 +1,12 @@
 package com.oees.oees.service;
 
 import com.oees.oees.entity.Exam;
+import com.oees.oees.entity.ExamResult;
 import com.oees.oees.entity.StudentAttempt;
 import com.oees.oees.entity.StudentResponse;
 import com.oees.oees.enums.AttemptStatus;
 import com.oees.oees.repository.ExamRepository;
+import com.oees.oees.repository.ExamResultRepository;
 import com.oees.oees.repository.StudentAttemptRepository;
 import com.oees.oees.repository.StudentResponseRepository;
 import lombok.Builder;
@@ -23,6 +25,7 @@ public class AnalyticsService {
     private final StudentAttemptRepository attemptRepository;
     private final ExamRepository examRepository;
     private final StudentResponseRepository responseRepository;
+    private final ExamResultRepository resultRepository;
 
     @Transactional(readOnly = true)
     public ExamAnalytics getExamAnalytics(Long examId) {
@@ -191,5 +194,29 @@ public class AnalyticsService {
                     .difficultyPercentage(difficulty)
                     .build();
         }).toList();
+    }
+
+    @Data
+    @Builder
+    public static class TopPerformer {
+        private Integer rank;
+        private String studentName;
+        private Integer score;
+        private Integer maxMarks;
+        private String grade;
+    }
+
+    @Transactional(readOnly = true)
+    public List<TopPerformer> getTopPerformers(Long examId) {
+        return resultRepository.findByExamIdOrderByTotalMarksDesc(examId).stream()
+                .limit(10)
+                .map(r -> TopPerformer.builder()
+                        .rank(r.getRank())
+                        .studentName(r.getStudent().getName())
+                        .score(r.getTotalMarks())
+                        .maxMarks(r.getExam().getTotalMarks())
+                        .grade(r.getGrade())
+                        .build())
+                .collect(Collectors.toList());
     }
 }

@@ -5,6 +5,7 @@ import com.oees.oees.entity.Course;
 import com.oees.oees.entity.Question;
 import com.oees.oees.entity.User;
 import com.oees.oees.repository.CourseRepository;
+import com.oees.oees.repository.ExamQuestionRepository;
 import com.oees.oees.repository.QuestionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ public class QuestionService {
 
     private final QuestionRepository questionRepository;
     private final CourseRepository courseRepository;
+    private final ExamQuestionRepository examQuestionRepository;
 
     public Question createQuestion(QuestionRequest request, User instructor) {
         Course course = courseRepository.findById(request.getCourseId())
@@ -67,6 +69,9 @@ public class QuestionService {
     public void deleteQuestion(Long questionId) {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new RuntimeException("Question not found"));
+        if (examQuestionRepository.isQuestionInActiveOrScheduledExam(questionId)) {
+            throw new RuntimeException("Cannot delete a question used in an active or scheduled exam");
+        }
         questionRepository.delete(question);
     }
 }

@@ -11,6 +11,7 @@ public class AttemptResponse {
     private Long attemptId;
     private LocalDateTime startedAt;
     private LocalDateTime deadline;
+    private Integer durationMinutes;
     private List<QuestionItem> questions;
 
     @Data

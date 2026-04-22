@@ -2,23 +2,20 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import api from '../../api/axios'
 
-function Timer({ deadline, onExpire }) {
-  const [remaining, setRemaining] = useState(() => {
-    const diff = new Date(deadline) - Date.now()
-    return Math.max(0, Math.floor(diff / 1000))
-  })
+function Timer({ durationMinutes, onExpire }) {
+  const secs = durationMinutes > 0 ? durationMinutes * 60 : 0
+  const [remaining, setRemaining] = useState(secs)
+  const onExpireRef = useRef(onExpire)
+  onExpireRef.current = onExpire
 
   useEffect(() => {
-    if (remaining <= 0) {
-      onExpire()
-      return
-    }
+    if (!durationMinutes || durationMinutes <= 0) return
 
     const timer = setInterval(() => {
       setRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(timer)
-          onExpire()
+          onExpireRef.current()
           return 0
         }
         return prev - 1
@@ -52,6 +49,7 @@ export default function TakeExam() {
 
   const attempt = state?.attempt
   const submitted = useRef(false)
+  const handleSubmitRef = useRef(null)
 
   const [answers, setAnswers] = useState({})
   const [current, setCurrent] = useState(0)
@@ -61,7 +59,13 @@ export default function TakeExam() {
   // Anti-cheat
   const [violations, setViolations] = useState(0)
   const [warning, setWarning] = useState('')
+  const [anticheatReady, setAnticheatReady] = useState(false)
   const MAX_VIOLATIONS = 3
+
+  useEffect(() => {
+    const t = setTimeout(() => setAnticheatReady(true), 3000)
+    return () => clearTimeout(t)
+  }, [])
 
   useEffect(() => {
     if (!attempt) {
@@ -128,6 +132,15 @@ export default function TakeExam() {
       [answers, questions, examId, attempt]
   )
 
+  handleSubmitRef.current = handleSubmit
+
+  useEffect(() => {
+    if (violations === MAX_VIOLATIONS) {
+      const t = setTimeout(() => handleSubmitRef.current(true), 1500)
+      return () => clearTimeout(t)
+    }
+  }, [violations])
+
   // ======================
   // Stable Anti-Cheat
   // ======================
@@ -135,16 +148,12 @@ export default function TakeExam() {
     if (!attempt) return
 
     const addViolation = (reason) => {
+      if (!anticheatReady) return
       setViolations((prev) => {
         const next = prev + 1
-
-        if (next >= MAX_VIOLATIONS) {
-          showWarning('Maximum warnings reached. Auto submitting...')
-          setTimeout(() => handleSubmit(true), 800)
-        } else {
-          showWarning(`${reason} (${next}/${MAX_VIOLATIONS})`)
-        }
-
+        showWarning(next >= MAX_VIOLATIONS
+          ? 'Maximum warnings reached. Auto submitting...'
+          : `${reason} (${next}/${MAX_VIOLATIONS})`)
         return next
       })
     }
@@ -154,14 +163,6 @@ export default function TakeExam() {
     const onVisibility = () => {
       if (document.hidden) {
         addViolation('Tab switch detected')
-      }
-    }
-
-    const onFullscreen = () => {
-      if (!document.fullscreenElement && !submitted.current) {
-        addViolation('Fullscreen exited')
-
-        document.documentElement.requestFullscreen?.().catch(() => {})
       }
     }
 
@@ -198,10 +199,7 @@ export default function TakeExam() {
     document.addEventListener('contextmenu', prevent)
 
     document.addEventListener('visibilitychange', onVisibility)
-    document.addEventListener('fullscreenchange', onFullscreen)
     window.addEventListener('keydown', onKeyDown)
-
-    document.documentElement.requestFullscreen?.().catch(() => {})
 
     return () => {
       document.removeEventListener('copy', prevent)
@@ -210,10 +208,9 @@ export default function TakeExam() {
       document.removeEventListener('contextmenu', prevent)
 
       document.removeEventListener('visibilitychange', onVisibility)
-      document.removeEventListener('fullscreenchange', onFullscreen)
       window.removeEventListener('keydown', onKeyDown)
     }
-  }, [attempt, handleSubmit])
+  }, [attempt, handleSubmit, anticheatReady])
 
   if (!attempt) return null
 
@@ -307,7 +304,7 @@ export default function TakeExam() {
             <div className="text-center">
               <p className="text-xs text-gray-400">Time remaining</p>
               <Timer
-                  deadline={attempt.deadline}
+                  durationMinutes={attempt.durationMinutes}
                   onExpire={() => handleSubmit(true)}
               />
             </div>

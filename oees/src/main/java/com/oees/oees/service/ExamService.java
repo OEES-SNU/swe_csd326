@@ -88,27 +88,18 @@ public class ExamService {
     }
 
     public List<ExamResponse> getExamsByCourse(Long courseId) {
-        return examRepository.findByCourseIdAndStatus(courseId, ExamStatus.ACTIVE).stream()
+        return examRepository.findByCourseIdOrderByCreatedAtDesc(courseId).stream()
                 .map(e -> toResponse(e, e.getExamQuestions() != null ? e.getExamQuestions().size() : 0))
                 .collect(Collectors.toList());
     }
 
-    // Called by scheduler to update exam statuses
     @Transactional
     public void updateExamStatuses() {
-        LocalDateTime now = LocalDateTime.now();
-        examRepository.findExamsToActivate(now).forEach(e -> {
-            e.setStatus(ExamStatus.ACTIVE);
-            examRepository.save(e);
-        });
-        examRepository.findExamsToExpire(now).forEach(e -> {
-            e.setStatus(ExamStatus.EXPIRED);
-            examRepository.save(e);
-        });
+        examRepository.activateExams();
+        examRepository.expireExams();
     }
 
     private ExamResponse toResponse(Exam e, int qCount) {
-
         String unit = e.getExamQuestions() == null || e.getExamQuestions().isEmpty()
                 ? null
                 : e.getExamQuestions().stream()

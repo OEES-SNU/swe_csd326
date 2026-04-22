@@ -2,12 +2,38 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../api/axios'
 
+const effectiveStatus = (ex) => {
+  const now = new Date();
+
+  const start = new Date(ex.startTime);
+const end = new Date(ex.endTime);
+
+  if (start && now < start) return 'SCHEDULED';
+  if (start && end && now >= start && now <= end) return 'ACTIVE';
+  if (end && now > end) return 'EXPIRED';
+
+  return ex.status;
+};
+
 const statusBadge = (s) => {
-  const map = { DRAFT: 'badge-gray', SCHEDULED: 'badge-blue', ACTIVE: 'badge-green', EXPIRED: 'badge-red', SUBMITTED: 'badge-blue', EVALUATED: 'badge-green' }
+  const map = {
+    DRAFT: 'badge-gray',
+    SCHEDULED: 'badge-blue',
+    ACTIVE: 'badge-green',
+    EXPIRED: 'badge-red',
+    SUBMITTED: 'badge-blue',
+    EVALUATED: 'badge-green'
+  }
   return <span className={map[s] ?? 'badge-gray'}>{s}</span>
 }
 
-const fmt = (dt) => dt ? new Date(dt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '—'
+const fmt = (dt) =>
+  dt
+    ? new Date(dt).toLocaleString([], {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+      })
+    : '—'
 
 export default function AvailableExams() {
   const [exams, setExams] = useState([])
@@ -17,6 +43,7 @@ export default function AvailableExams() {
   const [starting, setStarting] = useState(null)
   const navigate = useNavigate()
 
+  // ✅ Load data ONCE (no infinite loop)
   useEffect(() => {
     Promise.all([
       api.get('/exams/available'),
@@ -28,7 +55,7 @@ export default function AvailableExams() {
       })
       .catch(() => setError('Failed to load exams.'))
       .finally(() => setLoading(false))
-  }, [])
+  }, []) // ✅ IMPORTANT
 
   const startExam = async (examId) => {
     setStarting(examId)
@@ -52,69 +79,102 @@ export default function AvailableExams() {
       </div>
 
       {error && (
-        <div className="mb-4 px-3 py-2.5 bg-red-50 border border-red-200 rounded text-sm text-red-700">{error}</div>
+        <div className="mb-4 px-3 py-2.5 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+          {error}
+        </div>
       )}
 
       {loading ? (
-        <div className="text-sm text-gray-400 py-12 text-center">Loading…</div>
+        <div className="text-sm text-gray-400 py-12 text-center">
+          Loading…
+        </div>
       ) : (
         <>
           {exams.length === 0 ? (
             <div className="card p-12 text-center">
-              <p className="text-gray-400 text-sm">No exams available right now.</p>
-              <p className="text-gray-300 text-xs mt-1">Check back later or contact your instructor.</p>
+              <p className="text-gray-400 text-sm">
+                No exams available right now.
+              </p>
+              <p className="text-gray-300 text-xs mt-1">
+                Check back later or contact your instructor.
+              </p>
             </div>
           ) : (
             <div className="grid gap-4">
-              {exams.map((ex) => (
-                <div key={ex.id} className="card p-5 flex items-center gap-6">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h2 className="text-base font-semibold text-gray-900">{ex.title}</h2>
-                      {statusBadge(ex.status)}
+              {exams.map((ex) => {
+                const status = effectiveStatus(ex) // ✅ KEY FIX
+
+                return (
+                  <div key={ex.id} className="card p-5 flex items-center gap-6">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h2 className="text-base font-semibold text-gray-900">
+                          {ex.title}
+                        </h2>
+
+                        {/* ✅ FIXED: use computed status */}
+                        {statusBadge(status)}
+                      </div>
+
+                      <p className="text-sm text-gray-500">
+                        {ex.courseName}
+                      </p>
+
+                      <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
+                        <span>{ex.durationMinutes} min</span>
+                        <span>{ex.totalMarks} marks</span>
+                        <span>Pass: {ex.passMark}</span>
+                        <span>{ex.questionCount} questions</span>
+                        <span>Max attempts: {ex.maxAttempts}</span>
+                      </div>
+
+                      <div className="flex items-center gap-4 mt-1 text-xs text-gray-400">
+                        <span>Starts: {fmt(ex.startTime)}</span>
+                        <span>Ends: {fmt(ex.endTime)}</span>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-500">{ex.courseName}</p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
-                      <span>{ex.durationMinutes} min</span>
-                      <span>{ex.totalMarks} marks</span>
-                      <span>Pass: {ex.passMark}</span>
-                      <span>{ex.questionCount} questions</span>
-                      <span>Max attempts: {ex.maxAttempts}</span>
-                    </div>
-                    <div className="flex items-center gap-4 mt-1 text-xs text-gray-400">
-                      <span>Starts: {fmt(ex.startTime)}</span>
-                      <span>Ends: {fmt(ex.endTime)}</span>
+
+                    <div className="flex-shrink-0">
+                      <button
+                        className="btn-primary"
+                        disabled={status !== 'ACTIVE' || starting === ex.id} // ✅ FIXED
+                        onClick={() => startExam(ex.id)}
+                      >
+                        {starting === ex.id ? 'Starting…' : 'Start exam'}
+                      </button>
                     </div>
                   </div>
-                  <div className="flex-shrink-0">
-                    <button
-                      className="btn-primary"
-                      disabled={ex.status !== 'ACTIVE' || starting === ex.id}
-                      onClick={() => startExam(ex.id)}
-                    >
-                      {starting === ex.id ? 'Starting…' : 'Start exam'}
-                    </button>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
 
           {pastAttempts.length > 0 && (
             <div className="mt-8">
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">Past Attempts</h2>
+              <h2 className="text-sm font-semibold text-gray-700 mb-3">
+                Past Attempts
+              </h2>
+
               <div className="card divide-y divide-gray-100">
                 {pastAttempts.map((a) => (
-                  <div key={a.attemptId} className="px-5 py-3 flex items-center justify-between gap-4">
+                  <div
+                    key={a.attemptId}
+                    className="px-5 py-3 flex items-center justify-between gap-4"
+                  >
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{a.examTitle}</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {a.examTitle}
+                      </p>
                       <p className="text-xs text-gray-400 mt-0.5">
                         Attempt #{a.attemptNumber} · Submitted {fmt(a.submittedAt)}
                       </p>
                     </div>
+
                     <div className="flex items-center gap-3 flex-shrink-0">
                       {a.totalScore != null && (
-                        <span className="text-xs text-gray-500">{a.totalScore} pts</span>
+                        <span className="text-xs text-gray-500">
+                          {a.totalScore} pts
+                        </span>
                       )}
                       {statusBadge(a.status)}
                     </div>

@@ -15,7 +15,7 @@ function ProtectedRoute({ children, role }) {
     if (!isAuthReady) return null
 
     if (!user) return <Navigate to="/login" replace />
-    if (role && user.role !== role) return <Navigate to="/login" replace />
+    if (role && user.role !== role && !(user.role === 'ADMIN' && role === 'INSTRUCTOR')) return <Navigate to="/login" replace />
 
     return children
 }

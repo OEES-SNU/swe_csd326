@@ -40,7 +40,7 @@ public class AdminService {
                 .orElseThrow(() -> new RuntimeException("Course not found"));
         User instructor = userRepository.findById(instructorId)
                 .orElseThrow(() -> new RuntimeException("Instructor not found"));
-        if (instructor.getRole() != Role.INSTRUCTOR) {
+        if (instructor.getRole() != Role.INSTRUCTOR && instructor.getRole() != Role.ADMIN) {
             throw new RuntimeException("User is not an instructor");
         }
         course.setInstructor(instructor);
@@ -78,7 +78,7 @@ public class AdminService {
 
     public List<User> getAllInstructors() {
         return userRepository.findAll().stream()
-                .filter(u -> u.getRole() == Role.INSTRUCTOR)
+                .filter(u -> u.getRole() == Role.INSTRUCTOR || u.getRole() == Role.ADMIN)
                 .toList();
     }
 

@@ -18,7 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/instructor/questions")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('INSTRUCTOR')")
+@PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
 public class QuestionController {
 
     private final QuestionService questionService;

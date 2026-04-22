@@ -67,11 +67,16 @@ const navByRole = {
     { to: '/admin/courses', icon: icons.courses, label: 'Courses' },
     { to: '/admin/students', icon: icons.students, label: 'Users' },
     { to: '/admin/enrollments', icon: icons.enroll, label: 'Enrollments' },
+    { to: '/instructor/questions', icon: icons.questions, label: 'Question Bank' },
+    { to: '/instructor/exams', icon: icons.exams, label: 'Exams' },
+    { to: '/instructor/evaluation', icon: icons.evaluate, label: 'Evaluation' },
+    { to: '/instructor/analytics', icon: icons.results, label: 'Analytics' },
   ],
   INSTRUCTOR: [
     { to: '/instructor/questions', icon: icons.questions, label: 'Question Bank' },
     { to: '/instructor/exams', icon: icons.exams, label: 'Exams' },
     { to: '/instructor/evaluation', icon: icons.evaluate, label: 'Evaluation' },
+    { to: '/instructor/analytics', icon: icons.results, label: 'Analytics' },
   ],
   STUDENT: [
     { to: '/student/courses', icon: icons.courses, label: 'My Courses' },

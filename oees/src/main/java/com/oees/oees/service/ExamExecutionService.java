@@ -32,7 +32,11 @@ public class ExamExecutionService {
         Exam exam = examRepository.findById(examId)
                 .orElseThrow(() -> new RuntimeException("Exam not found"));
 
-        if (exam.getStatus() != ExamStatus.ACTIVE) {
+        LocalDateTime now = LocalDateTime.now(java.time.ZoneId.of("Asia/Kolkata"));
+        boolean isActive = exam.getStatus() == ExamStatus.ACTIVE ||
+                (exam.getStartTime() != null && !now.isBefore(exam.getStartTime()) &&
+                 (exam.getEndTime() == null || !now.isAfter(exam.getEndTime())));
+        if (!isActive) {
             throw new RuntimeException("Exam is not currently active");
         }
 
@@ -91,6 +95,7 @@ public class ExamExecutionService {
                 .attemptId(attempt.getId())
                 .startedAt(attempt.getStartedAt())
                 .deadline(deadline)
+                .durationMinutes(exam.getDurationMinutes())
                 .questions(items)
                 .build();
     }
